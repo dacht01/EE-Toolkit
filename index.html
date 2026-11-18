@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EE-Toolkit</title>
+<meta name="description" content="Zeichnungen für OneNote: Geometrie, Koordinatensysteme, Schaltungen, Zeiger- und Bode-Diagramme.">
+<meta name="theme-color" content="#16324f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-32.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+<script>
+  /* Office.js nur laden, wenn die Seite als OneNote-Add-in geöffnet wurde (…/index.html?addin=1) */
+  if (/[?&]addin=1/.test(location.search)) document.write('<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"><\/script>');
+</script>
+</head>
+<body>
+<header>
+  <h1>EE-Toolkit</h1>
+  <div class="hdr">
+    <button id="btnHelp" type="button">Formeln</button>
+    <button id="btnHist" type="button">Verlauf</button>
+    <button id="btnSet" type="button">Einstellungen</button>
+  </div>
+</header>
+
+<main>
+  <nav id="nav" aria-label="Werkzeuge"></nav>
+
+  <section id="formPane">
+    <label class="navsel">Werkzeug
+      <select id="navSel"></select>
+    </label>
+    <h2 id="toolName"></h2>
+    <div id="presets"></div>
+    <form id="form" autocomplete="off" onsubmit="return false"></form>
+    <button id="btnReset" type="button" class="quiet">Auf Standard zurücksetzen</button>
+  </section>
+
+  <section id="previewPane">
+    <div class="outbar">
+      <div class="seg" role="group" aria-label="Darstellung">
+        <button type="button" data-theme="hell">Hell</button>
+        <button type="button" data-theme="dunkel">Dunkel</button>
+      </div>
+      <label>Grösse
+        <select id="size">
+          <option value="0.7">klein</option>
+          <option value="1">mittel</option>
+          <option value="1.4">gross</option>
+          <option value="2">sehr gross</option>
+        </select>
+      </label>
+    </div>
+    <div id="stage"><div id="preview"></div></div>
+    <p id="err" role="alert" hidden></p>
+    <div id="actions">
+      <button id="btnInsert" type="button" class="primary" hidden>In OneNote einfügen</button>
+      <button id="btnCopy" type="button" class="primary">Kopieren</button>
+      <button id="btnShare" type="button" hidden>Teilen</button>
+      <button id="btnPng" type="button">PNG speichern</button>
+      <button id="btnSvg" type="button">SVG speichern</button>
+    </div>
+    <p id="toast" role="status" aria-live="polite"></p>
+  </section>
+</main>
+
+<dialog id="dlgSet">
+  <h2>Einstellungen</h2>
+  <div class="grid2">
+    <label>Farben
+      <select id="setMono"><option value="0">farbig</option><option value="1">einfarbig</option></select>
+    </label>
+    <label>Hintergrund
+      <select id="setTr"><option value="0">gefüllt</option><option value="1">transparent</option></select>
+    </label>
+    <label>Strichstärke
+      <select id="setLw"><option value="1.2">fein</option><option value="1.6">normal</option><option value="2.2">kräftig</option></select>
+    </label>
+    <label>Schriftgrösse
+      <select id="setFs"><option value="13">klein</option><option value="15">normal</option><option value="18">gross</option></select>
+    </label>
+    <label>Bildschärfe beim Export
+      <select id="setRes"><option value="2">2×</option><option value="3">3×</option><option value="4">4×</option></select>
+    </label>
+  </div>
+  <h3>OneNote im Browser</h3>
+  <p>Lädt die Manifest-Datei herunter, mit der du das Toolkit in OneNote Web als Add-in hochladen kannst. Funktioniert erst, wenn die App über https (z.&nbsp;B. GitHub Pages) läuft.</p>
+  <button id="btnManifest" type="button">Add-in-Manifest herunterladen</button>
+  <div class="dlgend"><button type="button" data-close class="primary">Fertig</button></div>
+</dialog>
+
+<dialog id="dlgHist">
+  <h2>Verlauf</h2>
+  <p class="hint">Die letzten exportierten Zeichnungen. Antippen lädt die Einstellungen wieder.</p>
+  <ul id="histList"></ul>
+  <div class="dlgend"><button type="button" id="btnHistClear" class="quiet">Verlauf leeren</button><button type="button" data-close class="primary">Schliessen</button></div>
+</dialog>
+
+<dialog id="dlgHelp">
+  <h2>Formeln und Beschriftungen</h2>
+  <table>
+    <tr><th>Rechnen</th><td><code>+ - * / ^</code>, Klammern. <code>2x</code>, <code>3(x+1)</code> und <code>2pi</code> gehen ohne Malzeichen.</td></tr>
+    <tr><th>Variable</th><td><code>x</code> oder <code>t</code>; bei Polar <code>phi</code>; bei Bode <code>s</code> (mit <code>j</code>).</td></tr>
+    <tr><th>Konstanten</th><td><code>pi</code>, <code>e</code></td></tr>
+    <tr><th>Funktionen</th><td><code>sin cos tan asin acos atan sinh cosh tanh exp ln log sqrt abs sgn min max step rect tri sinc floor ceil round</code><br><code>log</code> ist der Zehnerlogarithmus, <code>step</code> der Einheitssprung.</td></tr>
+    <tr><th>Zahlen</th><td><code>1e-3</code>, <code>4.7e3</code>. In Zahlenfeldern geht auch <code>2*pi</code> oder <code>1/3</code>.</td></tr>
+    <tr><th>Tiefgestellt</th><td><code>U_1</code>, <code>R_{ab}</code> wird zu U₁, R<sub>ab</sub></td></tr>
+    <tr><th>Hochgestellt</th><td><code>m/s^2</code>, <code>10^{-3}</code></td></tr>
+  </table>
+  <p class="hint">Beispiele: <code>5*sin(2*pi*50*t)</code> · <code>1 - exp(-t/0.002)</code> · <code>1/(1 + s/(2*pi*1000))</code></p>
+  <div class="dlgend"><button type="button" data-close class="primary">Schliessen</button></div>
+</dialog>
+
+<script src="js/core.js"></script>
+<script src="js/geo.js"></script>
+<script src="js/plots.js"></script>
+<script src="js/vec.js"></script>
+<script src="js/circuits.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
